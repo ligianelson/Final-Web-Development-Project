@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Travel Itinerary Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --cream: #fdf6f0;
+    --terracotta: #c2856a;
+    --terracotta-dark: #a8694f;
+    --wine: #7a3b2e;
+    --blush: #f2d5c8;
+    --text: #3a3a3a;
+    --muted: #7a6560;
+  }
+
+  body {
+    font-family: 'Lato', sans-serif;
+    background-color: var(--cream);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* NAV */
+  nav {
+    background-color: var(--terracotta);
+    padding: 14px 40px;
+    display: flex;
+    gap: 30px;
+  }
+  nav a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 14px;
+    letter-spacing: 0.05em;
+  }
+  nav a:hover { text-decoration: underline; }
+
+  /* HERO */
+  .hero {
+    background: linear-gradient(135deg, #c2856a 0%, #e8b49a 50%, #f2d5c8 100%);
+    padding: 70px 20px 50px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '✈';
+    position: absolute;
+    font-size: 200px;
+    opacity: 0.06;
+    top: -30px;
+    right: -20px;
+  }
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 3rem;
+    color: #fff;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .hero p {
+    color: rgba(255,255,255,0.9);
+    font-size: 1.1rem;
+    font-weight: 300;
+    letter-spacing: 0.03em;
+  }
+
+  /* FORM CARD */
+  .form-container {
+    max-width: 700px;
+    margin: -30px auto 0;
+    padding: 0 20px 60px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 36px 40px;
+    box-shadow: 0 8px 40px rgba(122,59,46,0.12);
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .form-group.full { grid-column: 1 / -1; }
+
+  label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  input, select, textarea {
+    border: 1.5px solid #e8ddd8;
+    border-radius: 8px;
+    padding: 11px 14px;
+    font-family: 'Lato', sans-serif;
+    font-size: 15px;
+    color: var(--text);
+    background: var(--cream);
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--terracotta);
+  }
+  textarea { resize: vertical; min-height: 80px; }
+
+  .generate-btn {
+    width: 100%;
+    background: var(--terracotta);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 15px;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-style: italic;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    transition: background 0.2s, transform 0.1s;
+    margin-top: 8px;
+  }
+  .generate-btn:hover { background: var(--terracotta-dark); }
+  .generate-btn:active { transform: scale(0.98); }
+  .generate-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+  /* RESULT */
+  #result-section {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 0 20px 80px;
+    display: none;
+  }
+
+  #result-section h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    color: var(--wine);
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .itinerary-output {
+    background: #fff;
+    border-radius: 16px;
+    padding: 36px 40px;
+    box-shadow: 0 8px 40px rgba(122,59,46,0.12);
+    line-height: 1.8;
+    font-size: 15px;
+    color: var(--text);
+    white-space: pre-wrap;
+  }
+
+  /* Day headings inside output */
+  .itinerary-output h3 {
+    font-family: 'Playfair Display', serif;
+    color: var(--wine);
+    font-size: 1.2rem;
+    margin: 20px 0 8px;
+    border-left: 4px solid var(--terracotta);
+    padding-left: 12px;
+  }
+
+  /* Loading spinner */
+  .loader {
+    display: none;
+    text-align: center;
+    padding: 30px;
+    color: var(--muted);
+    font-style: italic;
+  }
+  .loader span {
+    display: inline-block;
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* Footer */
+  footer {
+    background: var(--terracotta);
+    color: #fff;
+    text-align: center;
+    padding: 20px;
+    font-size: 14px;
+  }
+  footer a { color: #fff; text-decoration: underline; }
+
+  @media (max-width: 560px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .card, .itinerary-output { padding: 24px 20px; }
+    .hero h1 { font-size: 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html">Home</a>
+  <a href="education.html">Education</a>
+  <a href="experience.html">Experience</a>
+  <a href="skills.html">Skills</a>
+  <a href="scratch.html">Travel Page</a>
+</nav>
+
+<div class="hero">
+  <h1>Plan Your Dream Trip ✈️</h1>
+  <p>Enter your destination and dates — AI will craft your perfect itinerary</p>
+</div>
+
+<div class="form-container">
+  <div class="card">
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Destination</label>
+        <input type="text" id="destination" placeholder="e.g. Paris, France" />
+      </div>
+      <div class="form-group">
+        <label>Start Date</label>
+        <input type="date" id="start-date" />
+      </div>
+      <div class="form-group">
+        <label>End Date</label>
+        <input type="date" id="end-date" />
+      </div>
+      <div class="form-group full">
+        <label>Travel Style</label>
+        <select id="style">
+          <option value="balanced">Balanced (mix of everything)</option>
+          <option value="cultural">Cultural & Historical</option>
+          <option value="foodie">Foodie & Local Markets</option>
+          <option value="adventure">Adventure & Outdoors</option>
+          <option value="luxury">Luxury & Relaxation</option>
+          <option value="budget">Budget Traveler</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Any special interests or notes? (optional)</label>
+        <textarea id="notes" placeholder="e.g. I love coffee shops, street art, hidden gems..."></textarea>
+      </div>
+    </div>
+    <button class="generate-btn" onclick="generateItinerary()">Generate My Itinerary →</button>
+  </div>
+</div>
+
+<div id="result-section">
+  <h2 id="result-title"></h2>
+  <div class="loader" id="loader"><span>✈ Crafting your itinerary...</span></div>
+  <div class="itinerary-output" id="itinerary-output"></div>
+</div>
+
+<footer>
+  <p>Made with wanderlust ♥ | <a href="scratch.html">Back to Travel Page</a></p>
+</footer>
+
+<script>
+async function generateItinerary() {
+  const destination = document.getElementById('destination').value.trim();
+  const startDate = document.getElementById('start-date').value;
+  const endDate = document.getElementById('end-date').value;
+  const style = document.getElementById('style').value;
+  const notes = document.getElementById('notes').value.trim();
+
+  if (!destination || !startDate || !endDate) {
+    alert('Please fill in the destination and dates!');
+    return;
+  }
+
+  if (new Date(endDate) < new Date(startDate)) {
+    alert('End date must be after start date!');
+    return;
+  }
+
+  const btn = document.querySelector('.generate-btn');
+  btn.disabled = true;
+  btn.textContent = 'Planning your trip...';
+
+  const resultSection = document.getElementById('result-section');
+  const loader = document.getElementById('loader');
+  const output = document.getElementById('itinerary-output');
+  const title = document.getElementById('result-title');
+
+  resultSection.style.display = 'block';
+  loader.style.display = 'block';
+  output.innerHTML = '';
+
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const days = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
+
+  const prompt = `Create a detailed ${days}-day travel itinerary for ${destination} from ${startDate} to ${endDate}.
+
+Travel style: ${style}
+${notes ? `Special interests: ${notes}` : ''}
+
+For each day, provide:
+- A thematic title for the day
+- Morning, afternoon, and evening activities
+- Specific touristic places, landmarks, restaurants, or experiences
+- One practical tip for that day
+
+Format each day clearly with "Day X — [Theme]:" as the header. Be specific, vivid, and enthusiastic. Make it feel like a real travel guide written by someone who loves ${destination}.`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.content[0].text;
+
+    loader.style.display = 'none';
+    title.textContent = `Your ${days}-Day Itinerary for ${destination}`;
+
+    // Render with styled day headers
+    const formatted = text.replace(/^(Day \d+[^:\n]*:)/gm, '<h3>$1</h3>');
+    output.innerHTML = formatted;
+
+    resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  } catch (err) {
+    loader.style.display = 'none';
+    output.innerHTML = '<p style="color:#c0392b;">Something went wrong. Please try again!</p>';
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Generate My Itinerary →';
+}
+</script>
+
+</body>
+</html>
